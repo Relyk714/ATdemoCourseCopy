@@ -1,0 +1,120 @@
+start-process 'C:\Users\kxc0006\Documents\Learning Materials report.bat'
+
+start-sleep -s 600 ##Put in a long enough sleep or it'll shoot past the bat file running your sql command
+
+
+#This script will copy one course to another in the prod environment
+$token = "nothing here" # access_token
+$domain = "{url for instance goes here}" #place your instance URL here
+$file = gci -path "C:\bbfiles\queryresults" | sort LastWriteTime | select -last 1 | select -exp Name  #grab the most recent file in this directory to use to fule script
+$file = "C:\bbfiles\queryresults\"+$file #set the above variable as the file to be used
+get-content $file
+$csv = Import-Csv $file | select -SkipLast 1 # imports the file as a CSV type into PowerShell memory for manipulation
+Write-Host $token # error checking to see the token is clear
+$key="{dev key goes here}" # key from the prod site
+
+$secret= "{secret goes here}" #secret from the prod site
+
+$token= ""+$key+":"+$secret+"" #combine key and secret for getting oAuth token
+
+$token=[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($token)) # conversion of token to base 64 string. This process will fail without it.
+
+
+
+
+
+foreach ($line in $csv)
+{
+
+#Get the auth token
+
+$headers = @{"Authorization"="Basic "+$token
+"Content-Type"="application/x-www-form-urlencoded"}
+
+
+$url2 = "https://$domain/learn/api/public/v1/oauth2/token?grant_type=client_credentials"
+#parameters for the rest statement
+$Params = @{  
+"Uri" = $url2
+"Method" = "POST"
+"Headers" = $headers
+}
+#make sure to use RestMethod and not WebRequest. JSON can get "weird" otherwise 
+Invoke-RestMethod @Params
+$storeauth = Invoke-RestMethod @Params | select access_token
+$authtoken = $storeauth.access_token
+
+
+#Get the pk1 value for course copy
+
+
+$headers = @{"Authorization"="Bearer "+$authtoken
+"Content-Type"="application/json"}
+$urllookup = "https://$domain/learn/api/public/v3/courses?courseId=DCCCD-LEARNING-MATERIALS" #this statement gets the course name added to the variable
+
+      
+      
+
+$courseinfo= Invoke-RestMethod -Headers $headers -Method GET -Uri $urllookup
+$courseid = $courseinfo.results.id  #pulls the PK1 value from the JSON return
+
+
+
+$headers = @{"Authorization" ="Bearer " +$authtoken
+"Content-Type"="application/json"}
+
+
+
+
+$url2 = "https://$domain/learn/api/public/v2/courses/"+$courseid+"/copy"  #uses the PK1 value from the above step to send the REST command to the specific course
+$dest= $line.course_id #destination for the copy
+
+#JSON Body statement for switches/options of the course copy process. Check braces to make sure they are correct if adding more details or removing optional
+$operation = @{
+  targetCourse= @{
+   
+    id = "courseId:"+$dest+""
+  }
+  copy= @{
+    adaptiveReleaseRules= "false"
+    announcements= "false"
+    assessments= "false"
+    blogs= "false"
+    calendar= "false"
+    contacts= "false"
+    contentAlignments= "false"
+    contentAreas= "true"
+    discussions= "None"
+    glossary= "false"
+    gradebook= "false"
+    groupSettings= "false"
+    journals= "false"
+    retentionRules= "false"
+    rubrics= "false"
+    settings=@{
+      availability= "false"
+      bannerImage= "false"
+      duration= "false"
+      enrollmentOptions= "false"
+      guestAccess= "false"
+      languagePack= "false"
+      navigationSettings= "false"
+      observerAccess= "false"
+    }
+    tasks= "false"
+    wikis= "false"
+  }
+}
+
+
+
+Invoke-RestMethod -Headers $headers -Method POST -Uri $url2 -Body ($operation|Convertto-Json) #command to send the REST Call with the JSON body statement.
+
+##start-sleep -seconds 5 #sleep for testing
+
+
+
+
+
+
+}
