@@ -1,4 +1,4 @@
-start-process 'C:\Users\kxc0006\Documents\Learning Materials report.bat'
+start-process 'C:\{path to batch}\Learning Materials report.bat'
 
 start-sleep -s 600 ##Put in a long enough sleep or it'll shoot past the bat file running your sql command
 
