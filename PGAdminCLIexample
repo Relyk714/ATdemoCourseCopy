@@ -1,0 +1,1 @@
+"C:\Program Files\pgAdmin 4\v6\runtime\psql" -d "host={your instance here} port=5432 dbname={dbname goes here} user={db username goes here} password={password goes here}" -A -F "," -o C:/{output path}/learningmaterials.csv -f C:/{input path of sql code}/LearningMaterials.sql
