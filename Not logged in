@@ -1,0 +1,36 @@
+$fp= gci -path "{path to folder with raw data for process with no \ at the end}"|Where-Object {$_.Name -like "*MFA Check*"}| Sort LastWriteTime | select -last 1 | select -exp name ##gets the last file in folder with the naming convention
+$file = "({path to folder with raw data for process with \ at the end})"+$fp #sets the file name as a variable
+
+$courseimport = Import-Excel $file| Where-Object {$_.'Instr methods' -eq "INET" -or $_.'Instr Methods' -eq "HYBRID"} #Imports the excel doc as an object into Powershell
+$term = "2023SU-" #sets a string variable for term to write into query. Appends to front of a specific line in the excel doc
+$path = "{path to baseline query for build process}" #points to the query used
+$query = Get-Content -Path $path #Brings the query in as an object in powershell
+foreach ($line in $courseimport)
+
+{
+
+
+
+
+$coursestring = $term+$line."Sec Name"+"'" #formats the secname into a format we can use in DDA
+$output = " or cm.course_id='" #sets the sql front end to the secname
+$intofile = $output+$coursestring # adds the sql front end to the secname
+
+$query[$linenumber-15] +=$intofile ##writes the full sql line starting at 15 lines from the bottom of the query
+
+
+
+}
+$query | Out-File -FilePath "{file path where to output your query file}" -Encoding ASCII ##writes the query out to the disk. MUST BE IN ASCII
+sleep -Seconds 60 ##wait command to make sure the file is written
+
+start-process "{start the batch file that runs your process}}" ##Runs a batch file to fire off the query to DDA
+
+sleep -Seconds 90
+
+$finalfilepath= gci -path "{output path for your results with no \}"| Sort LastWriteTime | select -last 1 | select -exp name ## picks up the latest file
+$finalfile = "{output path with \ for your results}"+$finalfilepath ##sets the pathing to the latest file
+
+copy-item $finalfile -Destination "{path for file copy to network drive}" ## Copies the file into a network location.
+
+
