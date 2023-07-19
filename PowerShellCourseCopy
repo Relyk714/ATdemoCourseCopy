@@ -1,14 +1,15 @@
 #This script will copy one course to another in the staging/production environment
 $token = "nothing here" # access_token
 $domain = "{your url goes here}" #place your instance URL here
+$yep = "{path to magic}\automagic.xlsx"
+$dostuff= Import-Excel $yep
 $file = gci -path "C:\bbtest" | sort LastWriteTime | select -last 1 | select -exp Name  #grab the most recent file in this directory to use to fule script
 $file = "C:\bbtest\"+$file #set the above variable as the file to be used
 $csv = Import-Csv $file # imports the file as a CSV type into PowerShell memory for manipulation
 Write-Host $token # error checking to see the token is clear
-$key="{your API dev key here}" # key from the dev site
+$key=$dostuff.uid # key from the prod site
 
-$secret= "{your API secret here}" #secret from the dev site
-
+$secret= $dostuff.sid #secret from the prod site
 $token= ""+$key+":"+$secret+"" #combine key and secret for getting oAuth token
 
 $token=[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($token)) # conversion of token to base 64 string. This process will fail without it.
