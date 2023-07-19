@@ -6,16 +6,19 @@ start-sleep -s 600 ##Put in a long enough sleep or it'll shoot past the bat file
 #This script will copy one course to another in the prod environment
 $token = "nothing here" # access_token
 $domain = "{url for instance goes here}" #place your instance URL here
-$file = gci -path "C:\bbfiles\queryresults" | sort LastWriteTime | select -last 1 | select -exp Name  #grab the most recent file in this directory to use to fule script
+$yep = "{file path to that document}\automagic.xlsx"
+$dostuff= Import-Excel $yep ## talk to me about this
+$file = gci -path "C:\bbfiles\queryresults" | sort LastWriteTime | select -last 1 | select -exp Name  #grab the most recent file in this directory to use to fuel script
 $file = "C:\bbfiles\queryresults\"+$file #set the above variable as the file to be used
 get-content $file
 $csv = Import-Csv $file | select -SkipLast 1 # imports the file as a CSV type into PowerShell memory for manipulation
 Write-Host $token # error checking to see the token is clear
-$key="{dev key goes here}" # key from the prod site
+$key=$dostuff.uid # key from the prod site
 
-$secret= "{secret goes here}" #secret from the prod site
+$secret= $dostuff.sid #secret from the prod site
 
 $token= ""+$key+":"+$secret+"" #combine key and secret for getting oAuth token
+
 
 $token=[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($token)) # conversion of token to base 64 string. This process will fail without it.
 
